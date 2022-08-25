@@ -9,43 +9,182 @@
     </style>
 </head>
 <body>
+    <input type="number" id="Number">
+    <button onclick="agregar()">Agregar</button>
     <script src="js/three.js"></script>
+    <script src="js/avlImpl.js"></script>
     <script>
+        const limit = 0.1, vel = 0.07;
+        var verticalSpaces = 0;
+
+        function agregar(){
+            let number = parseInt(document.getElementById("Number").value);
+            tree.insertNode(number);
+            calculatePositions(tree);
+        }
+
+
+        const Drawings = function(x,y,name){
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.lastXArr = [];
+            this.lastYArr = [];
+            this.lastX = null;
+            this.lastY = null;
+            this.material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			this.geometry = new THREE.CircleGeometry( 20, 90 );
+			this.circle =  new THREE.Mesh( this.geometry, this.material);
+            this.circle.position.x = this.x - SCREEN_WIDTH/2;
+            this.circle.position.y = this.y - SCREEN_HEIGHT/2;
+            this.circle.position.z = 50;
+            scene.add(this.circle);
+
+            this.pushPosition = function(xx,yy){
+                this.lastXArr.push(xx);
+                this.lastYArr.push(yy);
+            }
+
+            this.getLastX = function(){
+                if(this.lastX == null || Math.abs(this.lastX - this.x) < limit){
+                    if(this.lastXArr.length > 0){
+                        this.lastX = this.lastXArr.shift();
+                    }else{
+                        this.lastX = this.x;
+                    }
+                }
+                return this.lastX;
+            }
+
+            this.getLastY = function(){
+                if(this.lastY == null || Math.abs(this.lastY - this.y) < limit){
+                    if(this.lastYArr.length > 0){
+                        this.lastY = this.lastYArr.shift();
+                    }else{
+                        this.lastY = this.y;
+                    }
+                }
+                return this.lastY;
+            }
+
+            this.setX = function(xxx){
+                this.x = xxx;
+                this.circle.position.x = this.x - SCREEN_WIDTH/2;
+            }
+
+            this.setY = function(yyy){
+                this.y = yyy;
+                this.circle.position.y = this.y - SCREEN_HEIGHT/2;
+            }
+        }
+
         const scene = new THREE.Scene();
+        let drawingsArr = [];
         scene.fog = new THREE.FogExp2(0xcce0ff, 0.0003);
         // Constantes del tamaño del canvas
-        var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+        const SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
 
         // Perspectiva ortográfica, ratio de aspecto y parámetros de cámara
         var viewSize = SCREEN_HEIGHT;
         aspectRatio  = SCREEN_WIDTH/SCREEN_HEIGHT;
         const camera = new THREE.OrthographicCamera( -SCREEN_WIDTH/2, SCREEN_WIDTH/2,SCREEN_HEIGHT/2, -SCREEN_HEIGHT/2, 1, 10000 );
+        camera.position.z = 400;
 
+        // Preparar el render
         const renderer = new THREE.WebGLRenderer({ alpha: true,antialias:true,preserveDrawingBuffer: true });
         renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
         renderer.setClearColor("#ffffff");
         document.body.appendChild( renderer.domElement );
 
-        const geometry = new THREE.BoxGeometry( 100, 100, 100);
-        const material = new THREE.MeshBasicMaterial( { color: 0xffc107 } );
-        const cube = new THREE.Mesh( geometry, material );
-        cube.position.x = 0;
-        cube.position.y = 0;
-        cube.position.z = 0;
-        scene.add( cube );
+        // const geometry = new THREE.BoxGeometry( 100, 100, 100);
+        // const material = new THREE.MeshBasicMaterial( { color: 0xffc107 } );
+        // const cube = new THREE.Mesh( geometry, material );
+        // cube.position.x = 0;
+        // cube.position.y = 0;
+        // cube.position.z = 0;
+        //scene.add( cube );
 
-        camera.position.z = 400;
+
+        // Creamos el arbol
+        tree = new AVLTree();
+        tree.insertNode(1);
+        tree.insertNode(2);
+        tree.insertNode(3);
+        console.log(tree);
+        calculatePositions(tree);
 
         function animate() {
             requestAnimationFrame( animate );
 
-            cube.rotation.x += 0.001;
-            cube.rotation.y += 0.01;
+            // cube.rotation.x += 0.001;
+            // cube.rotation.y += 0.01;
+            for (let i = 0; i < drawingsArr.length; i++) {
+                const element = drawingsArr[i];
+                element.setX(lerp(element.x, element.getLastX(), vel));
+                element.setY(lerp(element.y, element.getLastY(), vel));
+            }
 
             renderer.render( scene, camera );
         };
 
         animate();
+
+        function lerp(min, max, fraction) {
+           return (max - min) * fraction + min;
+        }
+
+
+        function calculatePositions(tree){
+            let root = tree.getRoot();
+            if(root != null){
+                // Obtenemos el número de espacios entre niveles del árbol
+                verticalSpaces = root.height + 1;
+
+                // Calculamos la posición de la raíz
+                root.y = SCREEN_HEIGHT - SCREEN_HEIGHT / verticalSpaces;
+                root.x = SCREEN_WIDTH / 2;
+                if(root.drawings == null){
+                    root.drawings = new Drawings(0,0,root.item);
+                    root.drawings.pushPosition(root.x,root.y);
+                    drawingsArr.push(root.drawings);
+                } else {
+                    root.drawings.pushPosition(root.x,root.y);
+                }
+                calculateChildren(root,2);
+            }
+        }
+
+        function calculateChildren(root,nivel){
+            if(root.right != null){
+                let newRoot = root.right;
+                // Calculamos la posición de la raíz
+                newRoot.y = SCREEN_HEIGHT - (SCREEN_HEIGHT / verticalSpaces) * nivel;
+                newRoot.x = root.x + (SCREEN_WIDTH / (Math.pow(2,(nivel - 1)) + 1)) / 2;
+                if(newRoot.drawings == null){
+                    newRoot.drawings = new Drawings(0,0);
+                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
+                    drawingsArr.push(newRoot.drawings);
+                } else {
+                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
+                }
+                calculateChildren(newRoot,nivel + 1)
+            }
+            if(root.left != null){
+                let newRoot = root.left;
+                // Calculamos la posición de la raíz
+                newRoot.y = SCREEN_HEIGHT - (SCREEN_HEIGHT / verticalSpaces) * nivel;
+                newRoot.x = root.x - (SCREEN_WIDTH / (Math.pow(2,(nivel - 1)) + 1)) / 2;
+                if(newRoot.drawings == null){
+                    newRoot.drawings = new Drawings(0,0);
+                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
+                    drawingsArr.push(newRoot.drawings);
+                } else {
+                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
+                }
+                calculateChildren(newRoot,nivel + 1)
+            }
+        }
+        
     </script>
     
 </body>
