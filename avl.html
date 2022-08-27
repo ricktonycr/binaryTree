@@ -210,11 +210,11 @@
         function animate() {
             requestAnimationFrame( animate );
 
-            for (let i = 0; i < drawingsArr.length; i++) {
-                const element = drawingsArr[i];
+            drawingsArr.forEach(element => {
                 element.setX(lerp(element.x, element.getLastX(), vel));
                 element.setY(lerp(element.y, element.getLastY(), vel));
-            }
+            });
+
 
             renderer.render( scene, camera );
         };
