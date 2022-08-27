@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+		body { margin: 0; padding: 0; font-size: 0; }
+		canvas { width: 100%; height: 100%; }
+	</style>
+    <script src="./js/three.min.js"></script>
+	<!--<script src="./jsm/loaders/FontLoader.js"></script>-->
+    <script src="./js/avlimp.js"></script>
+    <script>
+        tree = new AVLTree();
+        tree.insertNode(33);
+        tree.insertNode(13);
+        tree.insertNode(53);
+        tree.insertNode(21);
+        tree.insertNode(61);
+        tree.insertNode(8);
+        tree.insertNode(11);        
+        tree.insertNode(9);
+        //tree.preOrder();
+        tree.deleteNode(13);
+        console.log("After Deletion: ");
+        tree.preOrder();
+    </script>
+</head>
+<body>
+	<input type="number" step="1" id="element">
+	<button type="button" onclick="addNode()">Add node</button>
+	<button type="button" onclick="deleteNode()">Delete node</button>
+	
+    <script>
+		var WIDTH = window.innerWidth;
+		var HEIGHT = window.innerHeight;
+
+		var renderer = new THREE.WebGLRenderer({antialias:true});
+		renderer.setSize(WIDTH, HEIGHT);
+		renderer.setClearColor(0xDDDDDD, 1);
+		document.body.appendChild(renderer.domElement);
+
+		var scene = new THREE.Scene();
+
+		var camera = new THREE.PerspectiveCamera(70, WIDTH/HEIGHT, 0.1, 10000);
+		camera.position.z = 50;
+		scene.add(camera);
+
+		const geometry = new THREE.CircleGeometry( 2.5, 32 );
+		const materialPositivo = new THREE.MeshBasicMaterial( { color: 0x003366 } );
+		const materialNegativo = new THREE.MeshBasicMaterial( { color: 0xff471a } );
+		
+		var light = new THREE.PointLight(0xFFFFFF);
+		light.position.set(-10, 15, 50);
+		scene.add(light);
+		
+		var t = 0;
+		var clock = new THREE.Clock();
+		var speed = 20; //units a second // animation's velocity
+		var delta = 0;
+		var flagInsert = false;
+		var flagDelete = false;
+		var flagBalance = false;
+
+		function move(obj,xf,yf){
+			if(obj.position.y <= yf){
+				obj.position.y += speed * delta;
+			}
+			if(obj.position.x <= xf){
+				obj.position.x += speed * delta;
+			}
+			if(obj.position.y >= yf){
+				obj.position.y -= speed * delta;
+			}
+			if(obj.position.x >= xf){
+				obj.position.x -= speed * delta;
+			}
+			if(Math.abs(obj.position.x - xf) <= 1 && Math.abs(obj.position.y - yf) <=1){
+				return;
+			}
+		}
+		function movePath(obj,path){
+			if(path.length>0){
+				console.log("movep active",path.length);
+				move(obj,path[0].x,path[0].y);
+				if(Math.abs(obj.position.x - path[0].x) < 1 && Math.abs(obj.position.y - path[0].y) <1){
+					console.log("del");
+					path = path.splice(0, 1);
+				}
+			}else{
+				return path;
+			}
+									
+		}
+		function movePathArr(arr){
+			for(i=0;i<arr.length;i++){
+				tempObj = scene.getObjectByName("objectName"+arr[i].objName);
+				balance_path = arr[i].pathArray;
+				movePath(tempObj,balance_path);
+			}
+		}
+		var path = new Array();
+		var balance = new Array();
+		var balance_path = new Array();
+		var indice_balance = 0;
+		var atree = 0;
+		var btree = 0;
+		function render() {
+			t += 0.001;
+			requestAnimationFrame(render);
+			delta = clock.getDelta();
+
+			//animation path insert y balance
+			//console.log(flagInsert);
+			e = document.getElementById("element").value;
+				
+			var object2 = scene.getObjectByName( "objectName"+e,true );
+					
+  			console.log(object2.position.x,object2.position.y)
+			if(flagInsert){
+				//animation(atree,btree);
+				e = document.getElementById("element").value;
+				var object = scene.getObjectByName( "objectName"+e,true );
+				if(object!=undefined)
+					movePath(object,path);
+				
+				if(path.length==0){
+					flagInsert = false;
+				}
+				
+				//al terminar la animacion se inserta el nuevo elemento
+				if(!flagInsert){
+					//document.getElementById("element").value="";
+					console.log("insertar nuevo");		
+						
+				}
+				//animationPathInsert(circleNew, path, beforeTree);
+				//sanimationBalanceInsert(circleNew, balance, beforeTree);	
+			}
+
+			//animation path delete y balance
+			if(flagDelete){
+				
+			}
+
+			if(flagBalance && !flagInsert){
+				movePathArr(balance);
+			}
+			renderer.render(scene, camera);
+		}
+		var afterTree = new AVLTree();
+		var beforeTree = new AVLTree();
+
+		function addNode(){
+			//flag para animar en caso de insert
+			flagInsert = true;
+
+			atree+=1;
+			e = document.getElementById("element").value;
+			console.log(e);
+
+			afterTree.insertNode(e);
+			path = afterTree.drawing();
+			balance = afterTree.drawingBalance();
+			//path = result[0];
+			//balance = result[1];
+			
+			//path[0]={x:0,y:15};
+			//path[1]={x:15,y:-15};					
+			//path[2]={x:15,y:15};
+			//path[3]={x:0,y:15};
+			
+			/*if(e == '1'){
+				
+				pathArray = new Array();
+				pathArray[0]={x:0,y:15};
+				pathArray[1]={x:-15,y:15};
+				pathArray[2]={x:-15,y:0};			
+				balance[0]={objName:"0",pathArray:pathArray};
+
+				pathArray2 = new Array();
+				pathArray2[0]={x:0,y:15};
+				pathArray2[1]={x:15,y:15};
+				pathArray2[2]={x:0,y:15};			
+				balance[1]={objName:"1",pathArray:pathArray2};
+				
+				balance_path = balance[0].pathArray;
+
+			}*/
+			
+			if(balance.length>0){
+				flagBalance = true;
+				balance_path = balance[0].pathArray;
+			}
+
+			switch (Math.abs(parseInt(e))) {
+				case 0:
+					const material0 = new THREE.MeshBasicMaterial( { color: 0x33ff33 } );
+					const geometry0 = new THREE.CircleGeometry( 2.5, 45 );
+					const circle0 =  new THREE.Mesh( geometry0, material0 );
+					circle0.name = "objectName"+e;
+					//circleNew.translateY(20);
+					scene.add(circle0);
+					break;
+				case 1:
+					const geometry1 = new THREE.CircleGeometry( 2.5, 45 );
+					if(parseInt(e)>0){
+						circle1 =  new THREE.Mesh( geometry1, materialPositivo );
+					}else{
+						circle1 =  new THREE.Mesh( geometry1, materialNegativo);
+					}
+					circle1.name = "objectName"+e;
+					//circleNew.translateY(20);
+					scene.add(circle1);
+					break;
+				case 2:
+					const geometry2 = new THREE.Geometry();
+					geometry2.vertices.push(new THREE.Vector3(0, -2.5, 0)); //x, y, z
+					geometry2.vertices.push(new THREE.Vector3(0, 2.5, 0));
+					if(parseInt(e)>0){
+						line = new THREE.Line(geometry2, materialPositivo);
+					}else{
+						line = new THREE.Line(geometry2, materialNegativo);
+					}
+					line.name = "objectName"+e;
+					//circleNew.translateY(20);
+					scene.add(line);
+					break;	
+				default:
+					const geometryNew = new THREE.CircleGeometry( 2.5, Math.abs(parseInt(e)) );
+					if(parseInt(e)>0){
+						circleNew =  new THREE.Mesh( geometryNew, materialPositivo);
+					}else{
+						circleNew =  new THREE.Mesh( geometryNew, materialNegativo);	
+					}
+					circleNew.name = "objectName"+e;
+					//circleNew.translateY(20);
+					scene.add(circleNew);
+
+					break;
+			}
+		}
+		function deleteNode(){
+			flagDelete = true;
+			e = document.getElementById("element").value;
+
+		}
+		//render(afterTree,beforeTree);
+		render();
+	</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
