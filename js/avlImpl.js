@@ -142,6 +142,7 @@ const Node = function(item){
         } else {
           let temp = this.nodeWithMimumValue(root.right);
           root.item = temp.item;
+          root.drawing = temp.drawing;
           root.right = deleteNodeHelper(root.right, temp.item);
         }
       }

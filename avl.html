@@ -70,7 +70,7 @@
     <script src="js/three.js"></script>
     <script src="js/avlImpl.js"></script>
     <script>
-        const limit = 0.1, vel = 0.06;
+        const limit = 0.1, vel = 0.1;
         var verticalSpaces = 0;
         let drawingsArr = [];
         let linesArr = [];
@@ -198,14 +198,6 @@
         renderer.setClearColor("#ffffff");
         document.body.appendChild( renderer.domElement );
 
-        // const geometry = new THREE.BoxGeometry( 100, 100, 100);
-        // const material = new THREE.MeshBasicMaterial( { color: 0xffc107 } );
-        // const cube = new THREE.Mesh( geometry, material );
-        // cube.position.x = 0;
-        // cube.position.y = 0;
-        // cube.position.z = 0;
-        //scene.add( cube );
-
 
         // Creamos el arbol
         tree = new AVLTree();
@@ -218,8 +210,6 @@
         function animate() {
             requestAnimationFrame( animate );
 
-            // cube.rotation.x += 0.001;
-            // cube.rotation.y += 0.01;
             for (let i = 0; i < drawingsArr.length; i++) {
                 const element = drawingsArr[i];
                 element.setX(lerp(element.x, element.getLastX(), vel));
@@ -251,12 +241,12 @@
                 // Calculamos la posición de la raíz
                 root.y = SCREEN_HEIGHT - SCREEN_HEIGHT / verticalSpaces;
                 root.x = SCREEN_WIDTH / 2;
-                if(root.drawings == null){
-                    root.drawings = new Drawings(0,0,root.item);
-                    root.drawings.pushPosition(root.x,root.y);
-                    drawingsArr.push(root.drawings);
+                if(root.drawing == null){
+                    root.drawing = new Drawings(0,0,root.item);
+                    root.drawing.pushPosition(root.x,root.y);
+                    drawingsArr.push(root.drawing);
                 } else {
-                    root.drawings.pushPosition(root.x,root.y);
+                    root.drawing.pushPosition(root.x,root.y);
                 }
                 calculateChildren(root,2);
             }
@@ -287,12 +277,12 @@
                 // Calculamos la posición de la raíz
                 newRoot.y = SCREEN_HEIGHT - (SCREEN_HEIGHT / verticalSpaces) * nivel;
                 newRoot.x = root.x + (SCREEN_WIDTH / (Math.pow(2,(nivel-1)))) / 2;
-                if(newRoot.drawings == null){
-                    newRoot.drawings = new Drawings(0,0,newRoot.item);
-                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
-                    drawingsArr.push(newRoot.drawings);
+                if(newRoot.drawing == null){
+                    newRoot.drawing = new Drawings(0,0,newRoot.item);
+                    newRoot.drawing.pushPosition(newRoot.x,newRoot.y);
+                    drawingsArr.push(newRoot.drawing);
                 } else {
-                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
+                    newRoot.drawing.pushPosition(newRoot.x,newRoot.y);
                 }
 
                 // Dibujamos las líneas
@@ -311,12 +301,12 @@
                 // Calculamos la posición de la raíz
                 newRoot.y = SCREEN_HEIGHT - (SCREEN_HEIGHT / verticalSpaces) * nivel;
                 newRoot.x = root.x - (SCREEN_WIDTH / (Math.pow(2,(nivel-1)))) / 2;
-                if(newRoot.drawings == null){
-                    newRoot.drawings = new Drawings(0,0,newRoot.item);
-                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
-                    drawingsArr.push(newRoot.drawings);
+                if(newRoot.drawing == null){
+                    newRoot.drawing = new Drawings(0,0,newRoot.item);
+                    newRoot.drawing.pushPosition(newRoot.x,newRoot.y);
+                    drawingsArr.push(newRoot.drawing);
                 } else {
-                    newRoot.drawings.pushPosition(newRoot.x,newRoot.y);
+                    newRoot.drawing.pushPosition(newRoot.x,newRoot.y);
                 }// Dibujamos las líneas
                 // Create a sine-like wave
                 const curve = new THREE.CatmullRomCurve3( [
